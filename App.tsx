@@ -118,7 +118,7 @@ const App: React.FC = () => {
                 value={essayTopic}
                 onChange={(e) => setEssayTopic(e.target.value)}
                 placeholder="Ví dụ: Tả một cơn mưa rào mùa hạ"
-                className="w-full px-4 py-3 bg-white/80 border border-white/70 rounded-xl shadow-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition"
+                className="w-full px-4 py-3 bg-white/80 border border-white/70 rounded-xl shadow-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition text-stone-900 placeholder:text-stone-500"
               />
             </div>
 
@@ -132,7 +132,7 @@ const App: React.FC = () => {
                 value={essayText}
                 onChange={(e) => setEssayText(e.target.value)}
                 placeholder="Nhập nội dung bài văn của bạn vào đây, hoặc tải lên một tệp ở bên dưới..."
-                className="w-full px-4 py-3 bg-white/80 border border-white/70 rounded-xl shadow-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition"
+                className="w-full px-4 py-3 bg-white/80 border border-white/70 rounded-xl shadow-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition text-stone-900 placeholder:text-stone-500"
               />
             </div>
           </div>
