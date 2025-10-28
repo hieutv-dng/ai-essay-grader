@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://hieutv-dng.github.io/ai-essay-grader",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
