@@ -81,11 +81,11 @@ const ResultCard: React.FC<ResultCardProps> = ({ feedback }) => {
   if (!parsedData) {
     const htmlToRender = markdownToHtml(feedback);
     return (
-      <div className="mt-8 p-6 bg-white rounded-lg shadow-md border border-stone-200">
-        <h2 className="text-xl font-bold text-stone-700 mb-4">Kết quả đánh giá</h2>
-        <div 
-            className="text-stone-700 font-sans leading-relaxed prose"
-            dangerouslySetInnerHTML={{ __html: htmlToRender }} 
+      <div className="mt-10 rounded-3xl border border-white/60 bg-white/90 p-6 shadow-2xl backdrop-blur-xl">
+        <h2 className="text-2xl font-bold text-stone-900 mb-4">Kết quả đánh giá</h2>
+        <div
+            className="text-stone-700 font-sans leading-relaxed prose prose-stone max-w-none"
+            dangerouslySetInnerHTML={{ __html: htmlToRender }}
         />
       </div>
     );
@@ -100,21 +100,21 @@ const ResultCard: React.FC<ResultCardProps> = ({ feedback }) => {
   }
 
   return (
-    <div className="mt-10 animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
-            <div className="p-6 md:p-8">
-                <h2 className="text-2xl font-bold text-stone-800 mb-4 pb-2 border-b-2 border-amber-200 inline-block">I. Nhận xét tổng quan</h2>
+    <div className="mt-12 animate-fade-in">
+        <div className="overflow-hidden rounded-3xl border border-white/60 bg-white/90 shadow-2xl backdrop-blur-xl">
+            <div className="p-6 md:p-8 bg-gradient-to-r from-white/95 to-amber-50/80">
+                <h2 className="text-2xl font-bold text-stone-900 mb-4 pb-2 border-b-2 border-amber-300 inline-block">I. Nhận xét tổng quan</h2>
                 <p className="text-stone-700 leading-relaxed mt-4">{parsedData.overview}</p>
             </div>
 
-            <div className="bg-stone-50/70 p-6 md:p-8 border-y border-stone-200">
-                <h2 className="text-2xl font-bold text-stone-800 mb-5 pb-2 border-b-2 border-amber-200 inline-block">II. Phân tích chi tiết</h2>
+            <div className="bg-white/75 p-6 md:p-8 border-y border-stone-200/60">
+                <h2 className="text-2xl font-bold text-stone-900 mb-5 pb-2 border-b-2 border-amber-300 inline-block">II. Phân tích chi tiết</h2>
                 <div className="space-y-4 mt-4">
                     {parsedData.details.map((item, index) => (
-                        <div key={index} className="bg-white p-4 rounded-lg border border-stone-200 transition hover:shadow-md hover:border-amber-400">
+                        <div key={index} className="bg-white/95 p-4 rounded-xl border border-stone-200/80 transition hover:shadow-lg hover:border-amber-300">
                             <div className="flex justify-between items-start gap-4">
-                                <h3 className="font-bold text-stone-800 text-base">{item.name}</h3>
-                                <span className="text-sm font-semibold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full whitespace-nowrap">{item.score}</span>
+                                <h3 className="font-bold text-stone-900 text-base">{item.name}</h3>
+                                <span className="text-sm font-semibold text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-full whitespace-nowrap">{item.score}</span>
                             </div>
                             <p className="text-stone-600 mt-1 text-sm">{item.comment}</p>
                         </div>
@@ -122,15 +122,15 @@ const ResultCard: React.FC<ResultCardProps> = ({ feedback }) => {
                 </div>
             </div>
 
-            <div className="p-6 md:p-8 grid md:grid-cols-2 gap-8 items-start">
+            <div className="p-6 md:p-8 grid md:grid-cols-2 gap-8 items-start bg-white/85">
                 <div>
-                    <h2 className="text-2xl font-bold text-stone-800 mb-4 pb-2 border-b-2 border-amber-200 inline-block">III. Tổng điểm</h2>
-                    <div className={`text-lg font-bold px-4 py-2 mt-4 rounded-lg inline-block ${getScoreColor(parsedData.totalScore)}`}>
+                    <h2 className="text-2xl font-bold text-stone-900 mb-4 pb-2 border-b-2 border-amber-300 inline-block">III. Tổng điểm</h2>
+                    <div className={`text-lg font-bold px-4 py-2 mt-4 rounded-lg inline-block shadow-sm ${getScoreColor(parsedData.totalScore)}`}>
                         {parsedData.totalScore}
                     </div>
                 </div>
-                <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
-                    <h2 className="text-xl font-bold text-amber-900 mb-2 flex items-center gap-2">
+                <div className="bg-amber-50/80 border border-amber-200/80 p-5 rounded-2xl shadow-inner">
+                    <h2 className="text-xl font-bold text-amber-900 mb-3 flex items-center gap-2">
                       <Lightbulb size={20} />
                       <span>IV. Gợi ý cải thiện</span>
                     </h2>
