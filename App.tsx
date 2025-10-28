@@ -12,6 +12,7 @@ const App: React.FC = () => {
   const [feedback, setFeedback] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [inputMode, setInputMode] = useState<'manual' | 'upload'>('manual');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fileToBase64 = (file: File): Promise<{base64: string, mimeType: string}> => {
@@ -54,9 +55,29 @@ const App: React.FC = () => {
     }
   };
 
+  const handleModeChange = (mode: 'manual' | 'upload') => {
+    setInputMode(mode);
+    setError(null);
+
+    if (mode === 'manual') {
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } else {
+      setEssayText('');
+      setEssayTopic('');
+    }
+  };
+
   const handleSubmit = useCallback(async () => {
-    if (!essayText && !file) {
-      setError("Vui lòng nhập bài văn hoặc tải lên một tệp để AI chấm điểm nhé!");
+    if (inputMode === 'manual' && !essayText.trim()) {
+      setError("Vui lòng nhập nội dung bài làm để AI chấm điểm nhé!");
+      return;
+    }
+
+    if (inputMode === 'upload' && !file) {
+      setError("Vui lòng tải lên bài viết (ảnh hoặc .txt) để AI chấm điểm nhé!");
       return;
     }
 
@@ -81,7 +102,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [essayText, essayTopic, file]);
+  }, [essayText, essayTopic, file, inputMode]);
 
   return (
     <div className="relative min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -108,63 +129,104 @@ const App: React.FC = () => {
           </div>
 
           <div className="mt-8 space-y-6">
-            <div>
-              <label htmlFor="topic" className="block text-sm font-semibold text-stone-700 mb-2">
-                Đề bài (nếu có)
-              </label>
-              <input
-                id="topic"
-                type="text"
-                value={essayTopic}
-                onChange={(e) => setEssayTopic(e.target.value)}
-                placeholder="Ví dụ: Tả một cơn mưa rào mùa hạ"
-                className="w-full px-4 py-3 bg-white/80 border border-white/70 rounded-xl shadow-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition text-stone-900 placeholder:text-stone-500"
-              />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span className="text-sm font-semibold text-stone-700">Chọn cách bạn muốn cung cấp bài viết</span>
+              <div className="flex gap-4">
+                <label className="inline-flex items-center gap-2 text-sm font-medium text-stone-800">
+                  <input
+                    type="radio"
+                    name="input-mode"
+                    value="manual"
+                    checked={inputMode === 'manual'}
+                    onChange={() => handleModeChange('manual')}
+                    className="h-4 w-4 text-amber-500 border-stone-300 focus:ring-amber-400"
+                  />
+                  Nhập thủ công
+                </label>
+                <label className="inline-flex items-center gap-2 text-sm font-medium text-stone-800">
+                  <input
+                    type="radio"
+                    name="input-mode"
+                    value="upload"
+                    checked={inputMode === 'upload'}
+                    onChange={() => handleModeChange('upload')}
+                    className="h-4 w-4 text-amber-500 border-stone-300 focus:ring-amber-400"
+                  />
+                  Tải bài viết
+                </label>
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="essay" className="block text-sm font-semibold text-stone-700 mb-2">
-                Nội dung bài làm
-              </label>
-              <textarea
-                id="essay"
-                rows={12}
-                value={essayText}
-                onChange={(e) => setEssayText(e.target.value)}
-                placeholder="Nhập nội dung bài văn của bạn vào đây, hoặc tải lên một tệp ở bên dưới..."
-                className="w-full px-4 py-3 bg-white/80 border border-white/70 rounded-xl shadow-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition text-stone-900 placeholder:text-stone-500"
-              />
-            </div>
+            {inputMode === 'manual' && (
+              <div className="space-y-6">
+                <div>
+                  <label htmlFor="topic" className="block text-sm font-semibold text-stone-700 mb-2">
+                    Đề bài (nếu có)
+                  </label>
+                  <input
+                    id="topic"
+                    type="text"
+                    value={essayTopic}
+                    onChange={(e) => setEssayTopic(e.target.value)}
+                    placeholder="Ví dụ: Tả một cơn mưa rào mùa hạ"
+                    className="w-full px-4 py-3 bg-white/80 border border-white/70 rounded-xl shadow-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition text-stone-900 placeholder:text-stone-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="essay" className="block text-sm font-semibold text-stone-700 mb-2">
+                    Nội dung bài làm
+                  </label>
+                  <textarea
+                    id="essay"
+                    rows={12}
+                    value={essayText}
+                    onChange={(e) => setEssayText(e.target.value)}
+                    placeholder="Nhập nội dung bài văn của bạn vào đây..."
+                    className="w-full px-4 py-3 bg-white/80 border border-white/70 rounded-xl shadow-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition text-stone-900 placeholder:text-stone-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {inputMode === 'upload' && (
+              <div className="space-y-4">
+                <p className="text-sm text-stone-600">
+                  Tải lên ảnh chụp hoặc tệp .txt chứa bài viết của bạn.
+                </p>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-2 px-4 py-2.5 border border-amber-300/80 text-sm font-semibold rounded-xl text-amber-900 bg-amber-50/90 hover:bg-amber-100 transition shadow-sm"
+                  >
+                    <Upload size={16} />
+                    Tải bài viết (ảnh hoặc .txt)
+                  </button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept="image/*,.txt"
+                  />
+                  {file && (
+                    <div className="mt-3 flex items-center gap-2 text-sm text-stone-700 bg-white/80 px-3 py-1.5 rounded-xl border border-stone-200/80">
+                      <FileText size={16} className="text-amber-500" />
+                      <span className="font-medium truncate max-w-[220px]">{file.name}</span>
+                      <button onClick={clearFile} className="ml-auto text-stone-400 hover:text-stone-700 transition">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-8 pt-6 border-t border-stone-200/60">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-amber-300/80 text-sm font-semibold rounded-xl text-amber-900 bg-amber-50/90 hover:bg-amber-100 transition shadow-sm"
-                >
-                  <Upload size={16} />
-                  Tải bài viết (ảnh hoặc .txt)
-                </button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  accept="image/*,.txt"
-                />
-                {file && (
-                  <div className="mt-3 flex items-center gap-2 text-sm text-stone-700 bg-white/80 px-3 py-1.5 rounded-xl border border-stone-200/80">
-                    <FileText size={16} className="text-amber-500" />
-                    <span className="font-medium truncate max-w-[220px]">{file.name}</span>
-                    <button onClick={clearFile} className="ml-auto text-stone-400 hover:text-stone-700 transition">
-                      <X size={16} />
-                    </button>
-                  </div>
-                )}
-              </div>
+              <div className="flex-1" />
 
               <button
                 onClick={handleSubmit}
