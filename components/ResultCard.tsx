@@ -46,13 +46,13 @@ const markdownToHtml = (markdown: string): string => {
 
         const headerCells = rows[0]
             .split('|').slice(1, -1)
-            .map(cell => `<th class="px-4 py-2 text-left font-semibold text-stone-600 bg-stone-100">${cell.trim()}</th>`).join('');
+            .map(cell => `<th class="px-4 py-2 text-left font-semibold text-stone-900 bg-stone-100">${cell.trim()}</th>`).join('');
 
         const bodyRows = rows.slice(2)
-            .map(row => `<tr>${row.split('|').slice(1, -1).map(cell => `<td class="px-4 py-2 border-t border-stone-200">${cell.trim()}</td>`).join('')}</tr>`).join('');
+            .map(row => `<tr>${row.split('|').slice(1, -1).map(cell => `<td class="px-4 py-2 border-t border-stone-200 text-stone-800 bg-white">${cell.trim()}</td>`).join('')}</tr>`).join('');
 
         return `<div class="overflow-x-auto my-4">
-                    <table class="w-full border-collapse border border-stone-200 rounded-lg">
+                    <table class="w-full border-collapse border border-stone-200 rounded-lg text-stone-900">
                         <thead><tr>${headerCells}</tr></thead>
                         <tbody>${bodyRows}</tbody>
                     </table>
