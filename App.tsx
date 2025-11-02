@@ -8,14 +8,14 @@ import { FileText, Upload, PenSquare, X } from 'lucide-react';
 const App: React.FC = () => {
   const [essayText, setEssayText] = useState<string>('');
   const [essayTopic, setEssayTopic] = useState<string>('');
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [feedback, setFeedback] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [inputMode, setInputMode] = useState<'manual' | 'upload'>('manual');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fileToBase64 = (file: File): Promise<{base64: string, mimeType: string}> => {
+  const fileToBase64 = (file: File): Promise<{ base64: string; mimeType: string }> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -28,30 +28,80 @@ const App: React.FC = () => {
     });
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-        if (selectedFile.size > 4 * 1024 * 1024) { // 4MB limit
-            setError("Tệp quá lớn. Vui lòng chọn tệp nhỏ hơn 4MB.");
-            return;
-        }
-      setFile(selectedFile);
-      setError(null);
+  const fileToText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsText(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
 
-      if (selectedFile.type === 'text/plain') {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setEssayText(e.target?.result as string);
-        };
-        reader.readAsText(selectedFile);
+  const updateEssayTextFromFiles = useCallback((selectedFiles: File[]) => {
+    const textFiles = selectedFiles.filter((file) => file.type === 'text/plain');
+    if (textFiles.length === 0) {
+      setEssayText('');
+      return;
+    }
+
+    Promise.all(textFiles.map(fileToText))
+      .then((contents) => {
+        setEssayText(contents.join('\n\n'));
+      })
+      .catch(() => {
+        setError('Không thể đọc nội dung tệp .txt. Vui lòng thử lại.');
+      });
+  }, [setError, setEssayText]);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files ?? []);
+    if (selectedFiles.length === 0) {
+      return;
+    }
+
+    const combinedFiles = [...files, ...selectedFiles];
+
+    if (combinedFiles.length > 5) {
+      setError('Vui lòng tải lên tối đa 5 tệp.');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    for (const currentFile of selectedFiles) {
+      if (currentFile.size > 4 * 1024 * 1024) {
+        setError('Tệp quá lớn. Vui lòng chọn tệp nhỏ hơn 4MB.');
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        return;
       }
     }
+
+    setFiles(combinedFiles);
+    setError(null);
+    updateEssayTextFromFiles(combinedFiles);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
-  
-  const clearFile = () => {
-    setFile(null);
-    if(fileInputRef.current) {
-        fileInputRef.current.value = "";
+
+  const handleRemoveFile = (index: number) => {
+    const updatedFiles = files.filter((_, i) => i !== index);
+    setFiles(updatedFiles);
+    updateEssayTextFromFiles(updatedFiles);
+    if (fileInputRef.current && updatedFiles.length === 0) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const clearFiles = () => {
+    setFiles([]);
+    setEssayText('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -60,7 +110,7 @@ const App: React.FC = () => {
     setError(null);
 
     if (mode === 'manual') {
-      setFile(null);
+      setFiles([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -76,7 +126,7 @@ const App: React.FC = () => {
       return;
     }
 
-    if (inputMode === 'upload' && !file) {
+    if (inputMode === 'upload' && files.length === 0) {
       setError("Vui lòng tải lên bài viết (ảnh hoặc .txt) để AI chấm điểm nhé!");
       return;
     }
@@ -86,23 +136,17 @@ const App: React.FC = () => {
     setFeedback('');
 
     try {
-      let imageBase64: string | undefined = undefined;
-      let mimeType: string | undefined = undefined;
+      const imageFiles = files.filter((item) => item.type.startsWith('image/'));
+      const imagePayloads = await Promise.all(imageFiles.map(fileToBase64));
 
-      if (file && file.type.startsWith('image/')) {
-        const { base64: b64, mimeType: mt } = await fileToBase64(file);
-        imageBase64 = b64;
-        mimeType = mt;
-      }
-      
-      const result = await gradeEssay(essayTopic, essayText, imageBase64, mimeType);
+      const result = await gradeEssay(essayTopic, essayText, imagePayloads);
       setFeedback(result);
     } catch (err: any) {
       setError(err.message || "Đã có lỗi xảy ra trong quá trình chấm điểm.");
     } finally {
       setIsLoading(false);
     }
-  }, [essayText, essayTopic, file, inputMode]);
+  }, [essayText, essayTopic, files, inputMode]);
 
   return (
     <div className="relative min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -209,14 +253,35 @@ const App: React.FC = () => {
                     onChange={handleFileChange}
                     className="hidden"
                     accept="image/*,.txt"
+                    multiple
                   />
-                  {file && (
-                    <div className="mt-3 flex items-center gap-2 text-sm text-stone-700 bg-white/80 px-3 py-1.5 rounded-xl border border-stone-200/80">
-                      <FileText size={16} className="text-amber-500" />
-                      <span className="font-medium truncate max-w-[220px]">{file.name}</span>
-                      <button onClick={clearFile} className="ml-auto text-stone-400 hover:text-stone-700 transition">
-                        <X size={16} />
-                      </button>
+                  {files.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {files.map((currentFile, index) => (
+                        <div
+                          key={`${currentFile.name}-${index}`}
+                          className="flex items-center gap-2 text-sm text-stone-700 bg-white/80 px-3 py-1.5 rounded-xl border border-stone-200/80"
+                        >
+                          <FileText size={16} className="text-amber-500" />
+                          <span className="font-medium truncate max-w-[220px]">{currentFile.name}</span>
+                          <button
+                            onClick={() => handleRemoveFile(index)}
+                            className="ml-auto text-stone-400 hover:text-stone-700 transition"
+                            aria-label={`Xóa ${currentFile.name}`}
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ))}
+                      {files.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={clearFiles}
+                          className="text-xs font-semibold text-amber-600 hover:text-amber-700 transition"
+                        >
+                          Xóa tất cả tệp
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

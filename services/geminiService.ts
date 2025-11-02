@@ -40,7 +40,12 @@ Trả về kết quả bằng Markdown với cấu trúc chính xác như sau:
 - Nếu đầu vào là ảnh, hãy mô tả ngắn nội dung OCR được đọc ra ở đầu phần nhận xét tổng quan. Ví dụ: "(Bài viết được đọc từ ảnh chụp: 'Cây phượng ở sân trường em...')"
 - Luôn giữ thái độ tích cực, không phán xét.`;
 
-export const gradeEssay = async (topic: string, essay: string, imageBase64?: string, mimeType?: string): Promise<string> => {
+interface ImagePayload {
+  base64: string;
+  mimeType: string;
+}
+
+export const gradeEssay = async (topic: string, essay: string, images: ImagePayload[] = []): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const userPromptParts: any[] = [];
 
@@ -56,17 +61,20 @@ export const gradeEssay = async (topic: string, essay: string, imageBase64?: str
     userPromptParts.push({ text: fullPrompt });
   }
 
-  if (imageBase64 && mimeType) {
+  if (images.length > 0) {
     if (!essay) {
-      userPromptParts.push({ text: "Vui lòng đọc và chấm điểm bài văn trong ảnh chụp này." });
+      userPromptParts.push({ text: images.length > 1 ? "Vui lòng đọc và chấm điểm bài văn trong các ảnh chụp này." : "Vui lòng đọc và chấm điểm bài văn trong ảnh chụp này." });
     } else {
-        userPromptParts.push({ text: "\n\n(Đây là ảnh chụp bài viết tay để tham khảo)" });
+      userPromptParts.push({ text: images.length > 1 ? "\n\n(Các ảnh chụp bài viết tay đi kèm để tham khảo)" : "\n\n(Đây là ảnh chụp bài viết tay để tham khảo)" });
     }
-    userPromptParts.push({
-      inlineData: {
-        data: imageBase64,
-        mimeType: mimeType
-      }
+
+    images.forEach(({ base64, mimeType }) => {
+      userPromptParts.push({
+        inlineData: {
+          data: base64,
+          mimeType
+        }
+      });
     });
   }
 
